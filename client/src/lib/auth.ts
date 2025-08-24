@@ -22,6 +22,21 @@ export const initNetlifyIdentity = () => {
 
 export const loginWithGoogle = (): Promise<any> => {
   return new Promise((resolve, reject) => {
+    // Development mode bypass
+    if (import.meta.env.MODE === 'development') {
+      const devUser = {
+        id: 'dev-admin-1',
+        email: 'admin@skilld.com',
+        user_metadata: {
+          full_name: 'SKILLD Admin'
+        },
+        created_at: new Date().toISOString()
+      };
+      localStorage.setItem('dev_admin_user', JSON.stringify(devUser));
+      resolve(devUser);
+      return;
+    }
+
     if (!window.netlifyIdentity) {
       reject(new Error('Netlify Identity not loaded'));
       return;
@@ -44,6 +59,13 @@ export const loginWithGoogle = (): Promise<any> => {
 
 export const logout = (): Promise<void> => {
   return new Promise((resolve) => {
+    // Development mode bypass
+    if (import.meta.env.MODE === 'development') {
+      localStorage.removeItem('dev_admin_user');
+      resolve();
+      return;
+    }
+
     if (window.netlifyIdentity) {
       window.netlifyIdentity.logout();
       window.netlifyIdentity.on('logout', () => {
@@ -56,6 +78,14 @@ export const logout = (): Promise<void> => {
 };
 
 export const getCurrentUser = () => {
+  // Development mode bypass
+  if (import.meta.env.MODE === 'development') {
+    const devUser = localStorage.getItem('dev_admin_user');
+    if (devUser) {
+      return JSON.parse(devUser);
+    }
+  }
+  
   if (typeof window !== 'undefined' && window.netlifyIdentity) {
     return window.netlifyIdentity.currentUser();
   }
