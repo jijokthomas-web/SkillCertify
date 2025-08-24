@@ -62,6 +62,10 @@ export const insertCertificateSchema = createInsertSchema(certificates).pick({
   grade: true,
   issueDate: true,
   notes: true,
+}).extend({
+  issueDate: z.string().or(z.date()).transform((val) => 
+    typeof val === 'string' ? new Date(val) : val
+  ),
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).pick({

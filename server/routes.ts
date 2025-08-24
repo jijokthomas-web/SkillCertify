@@ -184,7 +184,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/certificates", async (req, res) => {
     try {
+      console.log("Raw certificate request body:", req.body);
+      
+      // Parse and validate the certificate data
       const certificateData = insertCertificateSchema.parse(req.body);
+      console.log("Parsed certificate data:", certificateData);
       
       // Generate certificate ID
       const timestamp = Date.now();
@@ -203,8 +207,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(certificate);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Certificate validation error:", error.errors);
         return res.status(400).json({ error: "Validation error", details: error.errors });
       }
+      console.error("Certificate creation error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
