@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCourseSchema, insertStudentSchema, insertCertificateSchema, insertSettingsSchema } from "@shared/schema";
+import { insertCourseSchema, insertStudentSchema, insertCertificateSchema, insertSettingsSchema } from "../shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -191,8 +191,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const certificateId = `SKILLD-${new Date().getFullYear()}-${String(timestamp).slice(-6)}`;
       
       // Generate QR code URL
-      const baseUrl = process.env.VITE_BASE_URL || "http://localhost:5000";
-      const qrCode = `${baseUrl}/verify/${certificateId}`;
+      const forwardedProto = (req.get("x-forwarded-proto") || req.protocol || "https") as string;
+      const forwardedHost = (req.get("x-forwarded-host") || req.get("host") || "localhost:5000") as string;
+      const runtimeBaseUrl = process.env.VITE_BASE_URL || `${forwardedProto}://${forwardedHost}`;
+      const qrCode = `${runtimeBaseUrl}/verify/${certificateId}`;
       
       const certificate = await storage.createCertificate({
         ...certificateData,

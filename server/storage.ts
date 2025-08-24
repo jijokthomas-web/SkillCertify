@@ -1,4 +1,4 @@
-import { type Course, type Student, type Certificate, type Settings, type InsertCourse, type InsertStudent, type InsertCertificate, type InsertSettings } from "@shared/schema";
+import { type Course, type Student, type Certificate, type Settings, type InsertCourse, type InsertStudent, type InsertCertificate, type InsertSettings } from "../shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
