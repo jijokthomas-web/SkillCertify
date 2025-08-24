@@ -282,7 +282,7 @@ export class MemStorage implements IStorage {
 export let storage: IStorage = new MemStorage();
 
 export async function initializeStorage(): Promise<void> {
-  if (process.env.DATABASE_URL) {
+  if (process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL) {
     const { DbStorage } = await import("./storage-db");
     const { ensureSchema } = await import("./db");
     await ensureSchema();

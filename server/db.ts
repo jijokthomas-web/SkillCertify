@@ -4,11 +4,12 @@ import * as schema from "../shared/schema";
 
 neonConfig.fetchConnectionCache = true;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required to use database storage");
+const DB_URL = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
+if (!DB_URL) {
+  throw new Error("DATABASE_URL/NETLIFY_DATABASE_URL is required to use database storage");
 }
 
-export const sqlClient = neon(process.env.DATABASE_URL);
+export const sqlClient = neon(DB_URL);
 export const db = drizzle(sqlClient, { schema });
 
 export async function ensureSchema(): Promise<void> {
