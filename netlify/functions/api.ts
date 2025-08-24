@@ -19,7 +19,8 @@ async function createHandler() {
     res.status(status).json({ message });
   });
 
-  return serverless(app);
+  // Strip Netlify function prefix so Express sees paths like '/api/...'
+  return serverless(app, { basePath: "/.netlify/functions" });
 }
 
 export const handler = async (event: any, context: any) => {
