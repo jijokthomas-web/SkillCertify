@@ -80,7 +80,7 @@ export default function Verify({ params }: { params: { certificateId: string } }
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Verified By SKILLD</h1>
-                  <p className="text-sm text-gray-600">Tag Verification</p>
+                  <p className="text-sm text-gray-600">Certificate Verification</p>
                 </div>
               </div>
               <Link href="/">
@@ -98,7 +98,7 @@ export default function Verify({ params }: { params: { certificateId: string } }
             <CardContent className="pt-6">
               <div className="flex mb-4 gap-2">
                 <AlertCircle className="h-8 w-8 text-skilld-red" />
-                <h1 className="text-2xl font-bold text-gray-900">Tag Not Found</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Certificate Not Found</h1>
               </div>
               <p className="mt-4 text-sm text-gray-600">
                 The certificate ID "{certificateId}" could not be found in our system.
@@ -106,7 +106,7 @@ export default function Verify({ params }: { params: { certificateId: string } }
               <div className="mt-6">
                 <Link href="/">
                   <Button className="w-full bg-skilld-blue hover:bg-blue-700" data-testid="button-try-again">
-                    Try Another Tag
+                    Try Another Certificate
                   </Button>
                 </Link>
               </div>
@@ -132,7 +132,7 @@ export default function Verify({ params }: { params: { certificateId: string } }
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Verified By SKILLD</h1>
-                <p className="text-sm text-gray-600">Tag Details</p>
+                <p className="text-sm text-gray-600">Certificate Details</p>
               </div>
             </div>
             <Link href="/">
@@ -145,14 +145,14 @@ export default function Verify({ params }: { params: { certificateId: string } }
         </div>
       </header>
 
-      {/* Tag Details */}
+      {/* Certificate Details */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Verification Status */}
         <div className="bg-skilld-green bg-opacity-10 border border-skilld-green rounded-lg p-6 mb-8">
           <div className="flex items-center">
             <CheckCircle className="text-skilld-green text-2xl mr-4" />
             <div>
-              <h2 className="text-xl font-semibold text-skilld-green">Tag Verified</h2>
+              <h2 className="text-xl font-semibold text-skilld-green">Certificate Verified</h2>
               <p className="text-green-700">This certificate is authentic and valid</p>
             </div>
           </div>
@@ -189,10 +189,10 @@ export default function Verify({ params }: { params: { certificateId: string } }
               </div>
 
               <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Tag Details</h4>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Certificate Details</h4>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Tag ID</label>
+                    <label className="text-sm font-medium text-gray-500">Certificate ID</label>
                     <p className="text-gray-900" data-testid="text-certificate-id">{data.certificate.certificateId}</p>
                   </div>
                   <div>
@@ -235,7 +235,7 @@ export default function Verify({ params }: { params: { certificateId: string } }
               <div className="inline-block p-4 bg-gray-50 rounded-lg">
                 <img 
                   src={qrCodeDataURL} 
-                  alt="Tag QR Code" 
+                  alt="Certificate QR Code" 
                   className="w-32 h-32"
                   data-testid="img-qr-code"
                 />

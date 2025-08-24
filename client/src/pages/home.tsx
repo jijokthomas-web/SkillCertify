@@ -35,7 +35,7 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Verified By SKILLD</h1>
-                <p className="text-sm text-gray-600">Tag Verification System</p>
+                <p className="text-sm text-gray-600">Certificate Verification System</p>
               </div>
             </div>
           </div>
@@ -45,7 +45,7 @@ export default function Home() {
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">Verify Your Tag</h2>
+          <h2 className="text-4xl font-bold text-gray-900 mb-6">Verify Your Certificate</h2>
           <p className="text-xl text-gray-600 mb-12">Enter your certificate ID or scan the QR code to verify authenticity</p>
         </div>
 
@@ -53,7 +53,7 @@ export default function Home() {
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
           <form onSubmit={handleVerify} className="max-w-md mx-auto">
             <label htmlFor="certificate-id" className="block text-sm font-medium text-gray-700 mb-2">
-              Tag ID
+              Certificate ID
             </label>
             <div className="flex gap-4">
               <Input
