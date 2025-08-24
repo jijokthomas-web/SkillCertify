@@ -52,12 +52,18 @@ export class DbStorage implements IStorage {
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
+    // Determine studentId: auto-generate if requested or if blank
+    let studentId = insertStudent.studentId;
+    if ((insertStudent as any).autoGenerateId || !studentId || !studentId.trim()) {
+      studentId = await this.generateStudentId();
+    }
+
     const rows = await db
       .insert(students)
       .values({
         name: insertStudent.name,
         email: insertStudent.email,
-        studentId: insertStudent.studentId,
+        studentId,
       })
       .returning();
     return rows[0];
@@ -92,11 +98,12 @@ export class DbStorage implements IStorage {
       .replace(/{YEAR}/g, year.toString())
       .replace(/{MONTH}/g, month);
 
-    const numberPattern = processedTemplate.match(/(#+)/);
+    // Find the pattern for numbers (supports {###} or ###)
+    const numberPattern = processedTemplate.match(/\{(#+)\}/) || processedTemplate.match(/(#+)/);
     if (!numberPattern) return processedTemplate;
 
     const paddingLength = numberPattern[1].length;
-    const prefix = processedTemplate.replace(numberPattern[1], "");
+    const prefix = processedTemplate.replace(numberPattern[0], "");
 
     const rows = await db
       .select({ studentId: students.studentId })
@@ -113,7 +120,7 @@ export class DbStorage implements IStorage {
 
     const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
     const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
-    return processedTemplate.replace(numberPattern[1], paddedNumber);
+    return processedTemplate.replace(numberPattern[0], paddedNumber);
   }
 
   // Certificates
@@ -227,5 +234,40 @@ export class DbStorage implements IStorage {
       totalCertificates: Number(totalCertificates ?? 0),
       totalVerifications: Number(totalVerifications ?? 0),
     };
+  }
+
+  async generateCertificateId(): Promise<string> {
+    const setting = await this.getSetting("certificate_id_pattern");
+    const template = setting?.value || "CERT-{YEAR}-{####}";
+
+    const year = new Date().getFullYear();
+    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
+
+    let processedTemplate = template
+      .replace(/{YEAR}/g, year.toString())
+      .replace(/{MONTH}/g, month);
+
+    const numberPattern = processedTemplate.match(/\{(#+)\}/) || processedTemplate.match(/(#+)/);
+    if (!numberPattern) return processedTemplate;
+
+    const paddingLength = numberPattern[1].length;
+    const prefix = processedTemplate.replace(numberPattern[0], "");
+
+    const rows = await db
+      .select({ certificateId: certificates.certificateId })
+      .from(certificates)
+      .where(sql`${certificates.certificateId} LIKE ${prefix + "%"}`);
+
+    const existingNumbers = rows
+      .map(r => r.certificateId)
+      .map(id => {
+        const match = id.match(/(\d+)$/);
+        return match ? parseInt(match[1]) : 0;
+      })
+      .filter(num => !isNaN(num));
+
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
+    return processedTemplate.replace(numberPattern[0], paddedNumber);
   }
 }

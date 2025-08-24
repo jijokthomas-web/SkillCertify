@@ -51,8 +51,8 @@ export const insertCourseSchema = createInsertSchema(courses).pick({
 export const insertStudentSchema = createInsertSchema(students).pick({
   name: true,
   email: true,
-  studentId: true,
 }).extend({
+  studentId: z.string().optional(),
   autoGenerateId: z.boolean().optional(),
 });
 
