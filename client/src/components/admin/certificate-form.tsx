@@ -46,10 +46,15 @@ export default function CertificateForm() {
 
   const createCertificateMutation = useMutation({
     mutationFn: async (data: CertificateFormData) => {
+      console.log("Certificate form data:", data); // Debug log
       const certificateData = {
-        ...data,
+        studentId: data.studentId,
+        courseId: data.courseId,
+        grade: data.grade,
         issueDate: new Date(data.issueDate).toISOString(),
+        notes: data.notes || "",
       };
+      console.log("Sending certificate data:", certificateData); // Debug log
       const response = await apiRequest("POST", "/api/admin/certificates", certificateData);
       return response.json();
     },
@@ -63,6 +68,7 @@ export default function CertificateForm() {
       form.reset();
     },
     onError: (error: any) => {
+      console.error("Certificate creation error:", error); // Debug log
       toast({
         title: "Error",
         description: error.message || "Failed to issue certificate",
@@ -72,6 +78,8 @@ export default function CertificateForm() {
   });
 
   const onSubmit = (data: CertificateFormData) => {
+    console.log("Form submitted with data:", data); // Debug log
+    console.log("Form errors:", form.formState.errors); // Debug log
     createCertificateMutation.mutate(data);
   };
 
@@ -90,7 +98,7 @@ export default function CertificateForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Select Student</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger data-testid="select-student">
                         <SelectValue placeholder="Choose a student" />
@@ -115,7 +123,7 @@ export default function CertificateForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Select Course</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger data-testid="select-course">
                         <SelectValue placeholder="Choose a course" />
