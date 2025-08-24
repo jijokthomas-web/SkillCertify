@@ -46,7 +46,6 @@ export default function CertificateForm() {
 
   const createCertificateMutation = useMutation({
     mutationFn: async (data: CertificateFormData) => {
-      console.log("Certificate form data:", data); // Debug log
       const certificateData = {
         studentId: data.studentId,
         courseId: data.courseId,
@@ -54,7 +53,6 @@ export default function CertificateForm() {
         issueDate: new Date(data.issueDate).toISOString(),
         notes: data.notes || "",
       };
-      console.log("Sending certificate data:", certificateData); // Debug log
       const response = await apiRequest("POST", "/api/admin/certificates", certificateData);
       return response.json();
     },
@@ -68,7 +66,6 @@ export default function CertificateForm() {
       form.reset();
     },
     onError: (error: any) => {
-      console.error("Certificate creation error:", error); // Debug log
       toast({
         title: "Error",
         description: error.message || "Failed to issue certificate",
@@ -78,8 +75,6 @@ export default function CertificateForm() {
   });
 
   const onSubmit = (data: CertificateFormData) => {
-    console.log("Form submitted with data:", data); // Debug log
-    console.log("Form errors:", form.formState.errors); // Debug log
     createCertificateMutation.mutate(data);
   };
 

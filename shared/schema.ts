@@ -56,16 +56,12 @@ export const insertStudentSchema = createInsertSchema(students).pick({
   autoGenerateId: z.boolean().optional(),
 });
 
-export const insertCertificateSchema = createInsertSchema(certificates).pick({
-  studentId: true,
-  courseId: true,
-  grade: true,
-  issueDate: true,
-  notes: true,
-}).extend({
-  issueDate: z.string().or(z.date()).transform((val) => 
-    typeof val === 'string' ? new Date(val) : val
-  ),
+export const insertCertificateSchema = z.object({
+  studentId: z.string(),
+  courseId: z.string(),
+  grade: z.string(),
+  issueDate: z.string().transform((val) => new Date(val)),
+  notes: z.string().optional(),
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).pick({
