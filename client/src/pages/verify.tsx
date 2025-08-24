@@ -146,12 +146,12 @@ export default function Verify({ params }: { params: { certificateId: string } }
       {/* Certificate Details */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Verification Status */}
-        <div className="bg-skilld-green bg-opacity-10 border border-skilld-green rounded-lg p-6 mb-8">
-          <div className="flex items-center">
-            <CheckCircle className="text-skilld-green text-2xl mr-4" />
+        <div className="bg-green-500 border border-green-600 rounded-lg p-6 mb-8">
+          <div className="flex items-center justify-center text-center">
+            <CheckCircle className="text-white text-2xl mr-4" />
             <div>
-              <h2 className="text-xl font-semibold text-skilld-green">Certificate Verified</h2>
-              <p className="text-green-700">This certificate is authentic and valid</p>
+              <h2 className="text-xl font-semibold text-white">Certificate Verified</h2>
+              <p className="text-white">This certificate is authentic and valid</p>
             </div>
           </div>
         </div>
