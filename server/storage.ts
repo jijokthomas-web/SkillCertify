@@ -145,13 +145,30 @@ export class MemStorage implements IStorage {
     const template = pattern?.value || "STU-{YEAR}-{###}";
     
     const year = new Date().getFullYear();
+    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
     const existingStudents = Array.from(this.students.values());
     
-    // Find the highest number for this year
-    const yearPrefix = template.replace("{YEAR}", year.toString()).replace("{###}", "");
+    // Replace variables in template
+    let processedTemplate = template
+      .replace(/{YEAR}/g, year.toString())
+      .replace(/{MONTH}/g, month);
+    
+    // Find the pattern for numbers (consecutive # symbols)
+    const numberPattern = processedTemplate.match(/(#+)/);
+    if (!numberPattern) {
+      // No number pattern found, just return the template
+      return processedTemplate;
+    }
+    
+    const paddingLength = numberPattern[1].length;
+    
+    // Create prefix by removing the number pattern
+    const prefix = processedTemplate.replace(numberPattern[1], "");
+    
+    // Find existing numbers with this prefix
     const existingNumbers = existingStudents
       .map(s => s.studentId)
-      .filter(id => id.startsWith(yearPrefix))
+      .filter(id => id.startsWith(prefix))
       .map(id => {
         const match = id.match(/(\d+)$/);
         return match ? parseInt(match[1]) : 0;
@@ -159,11 +176,9 @@ export class MemStorage implements IStorage {
       .filter(num => !isNaN(num));
     
     const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
-    const paddedNumber = nextNumber.toString().padStart(3, "0");
+    const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
     
-    return template
-      .replace("{YEAR}", year.toString())
-      .replace("{###}", paddedNumber);
+    return processedTemplate.replace(numberPattern[1], paddedNumber);
   }
 
   // Certificates

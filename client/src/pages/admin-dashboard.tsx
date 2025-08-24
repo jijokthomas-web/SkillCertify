@@ -12,7 +12,8 @@ import {
   Edit,
   Trash,
   Download,
-  QrCode
+  QrCode,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import { getCurrentUser, logout } from "@/lib/auth";
 import CourseForm from "@/components/admin/course-form";
 import StudentForm from "@/components/admin/student-form";
 import CertificateForm from "@/components/admin/certificate-form";
+import SettingsPanel from "@/components/admin/settings-panel";
 
 interface DashboardStats {
   totalCourses: number;
@@ -54,15 +56,15 @@ export default function AdminDashboard({ params }: { params?: { section?: string
     queryKey: ["/api/admin/stats"],
   });
 
-  const { data: courses = [] } = useQuery({
+  const { data: courses = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/courses"],
   });
 
-  const { data: students = [] } = useQuery({
+  const { data: students = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/students"],
   });
 
-  const { data: certificates = [] } = useQuery({
+  const { data: certificates = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/certificates"],
   });
 
@@ -135,6 +137,7 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                 { id: "courses", label: "Courses", icon: GraduationCap },
                 { id: "students", label: "Students", icon: Users },
                 { id: "certificates", label: "Certificates", icon: Tag },
+                { id: "settings", label: "Settings", icon: Settings },
               ].map((item) => (
                 <li key={item.id}>
                   <Button
@@ -486,6 +489,13 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Settings Panel */}
+          {activePanel === "settings" && (
+            <div data-testid="panel-settings">
+              <SettingsPanel />
             </div>
           )}
         </main>
