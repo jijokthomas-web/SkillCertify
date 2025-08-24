@@ -24,6 +24,7 @@ export default function SettingsPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [previewId, setPreviewId] = useState("");
+  const [previewCertId, setPreviewCertId] = useState("");
 
   const { data: settings = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/settings"],
@@ -39,6 +40,16 @@ export default function SettingsPanel() {
     },
   });
 
+  const certForm = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: {
+      prefix: "CERT",
+      middlePart: "{YEAR}",
+      numberPadding: "####",
+      separator: "-",
+    },
+  });
+
   // Load current settings
   useEffect(() => {
     if (settings.length > 0) {
@@ -50,8 +61,17 @@ export default function SettingsPanel() {
         form.setValue("numberPadding", parts[2]);
         form.setValue("separator", "-");
       }
+
+      const certPattern = settings.find(s => s.key === "certificate_id_pattern")?.value || "CERT-{YEAR}-####";
+      const certParts = certPattern.split("-");
+      if (certParts.length >= 3) {
+        certForm.setValue("prefix", certParts[0]);
+        certForm.setValue("middlePart", certParts[1]);
+        certForm.setValue("numberPadding", certParts[2]);
+        certForm.setValue("separator", "-");
+      }
     }
-  }, [settings, form]);
+  }, [settings, form, certForm]);
 
   // Update preview when form values change
   useEffect(() => {
@@ -64,6 +84,17 @@ export default function SettingsPanel() {
     });
     return () => subscription.unsubscribe();
   }, [form]);
+
+  useEffect(() => {
+    const subscription = certForm.watch((values) => {
+      if (values.prefix && values.middlePart && values.numberPadding && values.separator) {
+        const currentYear = new Date().getFullYear();
+        const preview = `${values.prefix}${values.separator}${values.middlePart.replace("{YEAR}", currentYear.toString())}${values.separator}${values.numberPadding.replace(/#+/g, (match) => "1".padStart(match.length, "0"))}`;
+        setPreviewCertId(preview);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [certForm]);
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: SettingsFormData) => {
@@ -79,6 +110,31 @@ export default function SettingsPanel() {
       toast({
         title: "Success",
         description: "Student ID pattern updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update settings",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCertSettingsMutation = useMutation({
+    mutationFn: async (data: SettingsFormData) => {
+      const pattern = `${data.prefix}${data.separator}${data.middlePart}${data.separator}${data.numberPadding}`;
+      const response = await apiRequest("POST", "/api/admin/settings", {
+        key: "certificate_id_pattern",
+        value: pattern,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      toast({
+        title: "Success",
+        description: "Certificate ID pattern updated successfully",
       });
     },
     onError: (error: any) => {
@@ -108,8 +164,25 @@ export default function SettingsPanel() {
     },
   });
 
+  const generateCertSampleMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/generate-certificate-id");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sample Generated",
+        description: `Next certificate ID would be: ${data.certificateId}`,
+      });
+    },
+  });
+
   const onSubmit = (data: SettingsFormData) => {
     updateSettingsMutation.mutate(data);
+  };
+
+  const onSubmitCert = (data: SettingsFormData) => {
+    updateCertSettingsMutation.mutate(data);
   };
 
   return (
@@ -253,6 +326,141 @@ export default function SettingsPanel() {
                     data-testid="button-save-settings"
                   >
                     {updateSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* Certificate ID Pattern Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Certificate ID Pattern Configuration</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Form {...certForm}>
+            <form onSubmit={certForm.handleSubmit(onSubmitCert)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={certForm.control}
+                  name="prefix"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Part 1: Prefix</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., CERT" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        The beginning part of the certificate ID
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={certForm.control}
+                  name="middlePart"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Part 2: Middle Section</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., {YEAR}, {MONTH}, COURSE" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Use {"{YEAR}"} for current year, {"{MONTH}"} for month, or static text
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={certForm.control}
+                  name="numberPadding"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Part 3: Number Format</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., ####" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Use # symbols for digits (### = 001, #### = 0001)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={certForm.control}
+                  name="separator"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Separator</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., -" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Character(s) between each part
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Preview */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Preview</h4>
+                <div className="text-lg font-mono text-skilld-blue" data-testid="preview-certificate-id">
+                  {previewCertId || "CERT-2025-0001"}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  This is how new certificate IDs will look
+                </p>
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-between items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => generateCertSampleMutation.mutate()}
+                  disabled={generateCertSampleMutation.isPending}
+                >
+                  {generateCertSampleMutation.isPending ? "Generating..." : "Generate Next Certificate ID"}
+                </Button>
+
+                <div className="flex space-x-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => certForm.reset()}
+                  >
+                    Reset
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={updateCertSettingsMutation.isPending}
+                    className="bg-skilld-blue hover:bg-blue-700"
+                  >
+                    {updateCertSettingsMutation.isPending ? "Saving..." : "Save Settings"}
                   </Button>
                 </div>
               </div>

@@ -186,9 +186,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const certificateData = insertCertificateSchema.parse(req.body);
       
-      // Generate certificate ID
-      const timestamp = Date.now();
-      const certificateId = `SKILLD-${new Date().getFullYear()}-${String(timestamp).slice(-6)}`;
+      // Generate certificate ID via storage pattern
+      const certificateId = await storage.generateCertificateId();
       
       // Generate QR code URL
       const forwardedProto = (req.get("x-forwarded-proto") || req.protocol || "https") as string;
@@ -250,6 +249,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const studentId = await storage.generateStudentId();
       res.json({ studentId });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/generate-certificate-id", async (_req, res) => {
+    try {
+      const certificateId = await storage.generateCertificateId();
+      res.json({ certificateId });
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }

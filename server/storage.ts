@@ -26,6 +26,7 @@ export interface IStorage {
   updateCertificate(id: string, certificate: Partial<Certificate>): Promise<Certificate | undefined>;
   deleteCertificate(id: string): Promise<boolean>;
   incrementVerificationCount(certificateId: string): Promise<void>;
+  generateCertificateId(): Promise<string>;
 
   // Settings
   getSettings(): Promise<Settings[]>;
@@ -60,6 +61,7 @@ export class MemStorage implements IStorage {
   private async initializeDefaultSettings() {
     await this.createOrUpdateSetting("student_id_pattern", "STU-{YEAR}-{###}");
     await this.createOrUpdateSetting("student_id_auto_generate", "true");
+    await this.createOrUpdateSetting("certificate_id_pattern", "CERT-{YEAR}-{####}");
   }
 
   // Courses
@@ -178,6 +180,41 @@ export class MemStorage implements IStorage {
     const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
     const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
     
+    return processedTemplate.replace(numberPattern[0], paddedNumber);
+  }
+
+  async generateCertificateId(): Promise<string> {
+    const pattern = await this.getSetting("certificate_id_pattern");
+    const template = pattern?.value || "CERT-{YEAR}-{####}";
+
+    const year = new Date().getFullYear();
+    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
+    const existingCertificates = Array.from(this.certificates.values());
+
+    let processedTemplate = template
+      .replace(/{YEAR}/g, year.toString())
+      .replace(/{MONTH}/g, month);
+
+    const numberPattern = processedTemplate.match(/\{(#+)\}/) || processedTemplate.match(/(#+)/);
+    if (!numberPattern) {
+      return processedTemplate;
+    }
+
+    const paddingLength = numberPattern[1].length;
+    const prefix = processedTemplate.replace(numberPattern[0], "");
+
+    const existingNumbers = existingCertificates
+      .map(c => c.certificateId)
+      .filter(id => id.startsWith(prefix))
+      .map(id => {
+        const match = id.match(/(\d+)$/);
+        return match ? parseInt(match[1]) : 0;
+      })
+      .filter(num => !isNaN(num));
+
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
+
     return processedTemplate.replace(numberPattern[0], paddedNumber);
   }
 
