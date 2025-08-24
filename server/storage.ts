@@ -1,4 +1,4 @@
-import { type Course, type Student, type Certificate, type Settings, type InsertCourse, type InsertStudent, type InsertCertificate, type InsertSettings } from "@shared/schema";
+import { type Course, type Student, type Certificate, type Settings, type InsertCourse, type InsertStudent, type InsertCertificate, type InsertSettings } from "../shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -279,4 +279,13 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export let storage: IStorage = new MemStorage();
+
+export async function initializeStorage(): Promise<void> {
+  if (process.env.DATABASE_URL) {
+    const { DbStorage } = await import("./storage-db");
+    const { ensureSchema } = await import("./db");
+    await ensureSchema();
+    storage = new DbStorage();
+  }
+}
