@@ -1,6 +1,7 @@
 import express from "express";
 import serverless from "serverless-http";
 import { registerRoutes } from "../../server/routes";
+import { initializeStorage } from "../../server/storage";
 
 let cachedHandler: any;
 
@@ -9,6 +10,7 @@ async function createHandler() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
 
+  await initializeStorage();
   await registerRoutes(app);
 
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
