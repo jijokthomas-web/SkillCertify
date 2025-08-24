@@ -25,11 +25,11 @@ export default function CertificateForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: students = [] } = useQuery({
+  const { data: students = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/students"],
   });
 
-  const { data: courses = [] } = useQuery({
+  const { data: courses = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/courses"],
   });
 

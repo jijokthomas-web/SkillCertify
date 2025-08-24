@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCourseSchema, insertStudentSchema, insertCertificateSchema } from "@shared/schema";
+import { insertCourseSchema, insertStudentSchema, insertCertificateSchema, insertSettingsSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -219,6 +219,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Settings
+  app.get("/api/admin/settings", async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/admin/settings", async (req, res) => {
+    try {
+      const { key, value } = req.body;
+      const setting = await storage.createOrUpdateSetting(key, value);
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/generate-student-id", async (req, res) => {
+    try {
+      const studentId = await storage.generateStudentId();
+      res.json({ studentId });
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }

@@ -1,4 +1,4 @@
-import { type Course, type Student, type Certificate, type InsertCourse, type InsertStudent, type InsertCertificate } from "@shared/schema";
+import { type Course, type Student, type Certificate, type Settings, type InsertCourse, type InsertStudent, type InsertCertificate, type InsertSettings } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -16,6 +16,7 @@ export interface IStorage {
   createStudent(student: InsertStudent): Promise<Student>;
   updateStudent(id: string, student: Partial<InsertStudent>): Promise<Student | undefined>;
   deleteStudent(id: string): Promise<boolean>;
+  generateStudentId(): Promise<string>;
 
   // Certificates
   getCertificates(): Promise<Certificate[]>;
@@ -25,6 +26,11 @@ export interface IStorage {
   updateCertificate(id: string, certificate: Partial<Certificate>): Promise<Certificate | undefined>;
   deleteCertificate(id: string): Promise<boolean>;
   incrementVerificationCount(certificateId: string): Promise<void>;
+
+  // Settings
+  getSettings(): Promise<Settings[]>;
+  getSetting(key: string): Promise<Settings | undefined>;
+  createOrUpdateSetting(key: string, value: string): Promise<Settings>;
 
   // Statistics
   getStats(): Promise<{
@@ -39,11 +45,21 @@ export class MemStorage implements IStorage {
   private courses: Map<string, Course>;
   private students: Map<string, Student>;
   private certificates: Map<string, Certificate>;
+  private settings: Map<string, Settings>;
 
   constructor() {
     this.courses = new Map();
     this.students = new Map();
     this.certificates = new Map();
+    this.settings = new Map();
+    
+    // Initialize default settings
+    this.initializeDefaultSettings();
+  }
+
+  private async initializeDefaultSettings() {
+    await this.createOrUpdateSetting("student_id_pattern", "STU-{YEAR}-{###}");
+    await this.createOrUpdateSetting("student_id_auto_generate", "true");
   }
 
   // Courses
@@ -94,8 +110,16 @@ export class MemStorage implements IStorage {
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
     const id = randomUUID();
+    let studentId = insertStudent.studentId;
+    
+    // Auto-generate student ID if requested or if not provided
+    if (insertStudent.autoGenerateId || !studentId || !studentId.trim()) {
+      studentId = await this.generateStudentId();
+    }
+    
     const student: Student = {
       ...insertStudent,
+      studentId,
       id,
       createdAt: new Date(),
     };
@@ -114,6 +138,32 @@ export class MemStorage implements IStorage {
 
   async deleteStudent(id: string): Promise<boolean> {
     return this.students.delete(id);
+  }
+
+  async generateStudentId(): Promise<string> {
+    const pattern = await this.getSetting("student_id_pattern");
+    const template = pattern?.value || "STU-{YEAR}-{###}";
+    
+    const year = new Date().getFullYear();
+    const existingStudents = Array.from(this.students.values());
+    
+    // Find the highest number for this year
+    const yearPrefix = template.replace("{YEAR}", year.toString()).replace("{###}", "");
+    const existingNumbers = existingStudents
+      .map(s => s.studentId)
+      .filter(id => id.startsWith(yearPrefix))
+      .map(id => {
+        const match = id.match(/(\d+)$/);
+        return match ? parseInt(match[1]) : 0;
+      })
+      .filter(num => !isNaN(num));
+    
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const paddedNumber = nextNumber.toString().padStart(3, "0");
+    
+    return template
+      .replace("{YEAR}", year.toString())
+      .replace("{###}", paddedNumber);
   }
 
   // Certificates
@@ -160,6 +210,39 @@ export class MemStorage implements IStorage {
       const count = parseInt(certificate.verificationCount) + 1;
       certificate.verificationCount = count.toString();
       this.certificates.set(certificate.id, certificate);
+    }
+  }
+
+  // Settings
+  async getSettings(): Promise<Settings[]> {
+    return Array.from(this.settings.values());
+  }
+
+  async getSetting(key: string): Promise<Settings | undefined> {
+    return Array.from(this.settings.values()).find(s => s.key === key);
+  }
+
+  async createOrUpdateSetting(key: string, value: string): Promise<Settings> {
+    const existing = await this.getSetting(key);
+    if (existing) {
+      const updated: Settings = { 
+        ...existing, 
+        value, 
+        updatedAt: new Date() 
+      };
+      this.settings.set(existing.id, updated);
+      return updated;
+    } else {
+      const id = randomUUID();
+      const setting: Settings = {
+        id,
+        key,
+        value,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.settings.set(id, setting);
+      return setting;
     }
   }
 

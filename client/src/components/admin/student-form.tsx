@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +13,16 @@ import { apiRequest } from "@/lib/queryClient";
 const studentSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
-  studentId: z.string().min(1, "Student ID is required"),
+  studentId: z.string().optional(),
+  autoGenerateId: z.boolean(),
+}).superRefine((data, ctx) => {
+  if (!data.autoGenerateId && (!data.studentId || data.studentId.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Student ID is required when auto-generation is disabled",
+      path: ["studentId"],
+    });
+  }
 });
 
 type StudentFormData = z.infer<typeof studentSchema>;
@@ -27,8 +37,11 @@ export default function StudentForm() {
       name: "",
       email: "",
       studentId: "",
+      autoGenerateId: true,
     },
   });
+
+  const autoGenerateId = form.watch("autoGenerateId");
 
   const createStudentMutation = useMutation({
     mutationFn: async (data: StudentFormData) => {
@@ -42,7 +55,12 @@ export default function StudentForm() {
         title: "Success",
         description: "Student added successfully",
       });
-      form.reset();
+      form.reset({
+        name: "",
+        email: "",
+        studentId: "",
+        autoGenerateId: true,
+      });
     },
     onError: (error: any) => {
       toast({
@@ -104,27 +122,58 @@ export default function StudentForm() {
 
           <FormField
             control={form.control}
-            name="studentId"
+            name="autoGenerateId"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Student ID</FormLabel>
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">
+                    Auto-generate Student ID
+                  </FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically generate ID using pattern (STU-YYYY-###)
+                  </p>
+                </div>
                 <FormControl>
-                  <Input 
-                    placeholder="e.g., STU-2024-001" 
-                    {...field} 
-                    data-testid="input-student-id"
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    data-testid="switch-auto-generate-id"
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
+
+          {!autoGenerateId && (
+            <FormField
+              control={form.control}
+              name="studentId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Student ID</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g., STU-2024-001" 
+                      {...field} 
+                      data-testid="input-student-id"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <div className="flex justify-end space-x-4 pt-4">
             <Button 
               type="button" 
               variant="outline"
-              onClick={() => form.reset()}
+              onClick={() => form.reset({
+                name: "",
+                email: "",
+                studentId: "",
+                autoGenerateId: true,
+              })}
               data-testid="button-cancel-student"
             >
               Cancel
