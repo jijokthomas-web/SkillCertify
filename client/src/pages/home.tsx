@@ -30,9 +30,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-skilld-blue rounded-lg flex items-center justify-center mr-4">
-                <Tag className="text-white text-xl" />
-              </div>
+              <img src="https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png" alt="Logo" className="h-12 w-auto mr-4" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Verified By SKILLD</h1>
                 <p className="text-sm text-gray-600">Certificate Verification System</p>
