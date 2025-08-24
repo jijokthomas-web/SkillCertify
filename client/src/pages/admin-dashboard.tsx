@@ -20,6 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { getCurrentUser, logout } from "@/lib/auth";
+import { downloadQRCode, generateQRCodeURL } from "@/lib/qr-generator";
+import { useToast } from "@/hooks/use-toast";
 import CourseForm from "@/components/admin/course-form";
 import StudentForm from "@/components/admin/student-form";
 import CertificateForm from "@/components/admin/certificate-form";
@@ -36,6 +38,7 @@ export default function AdminDashboard({ params }: { params?: { section?: string
   const [, setLocation] = useLocation();
   const [activePanel, setActivePanel] = useState(params?.section || "overview");
   const [user, setUser] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -67,6 +70,23 @@ export default function AdminDashboard({ params }: { params?: { section?: string
   const { data: certificates = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/certificates"],
   });
+
+  const handleDownloadQR = async (certificate: any) => {
+    try {
+      const filename = `certificate-qr-${certificate.certificateId}`;
+      await downloadQRCode(certificate.qrCode, filename);
+      toast({
+        title: "Success",
+        description: "QR code downloaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download QR code",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -456,14 +476,45 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                             </div>
                           </div>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" data-testid={`button-download-certificate-${certificate.id}`}>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleDownloadQR(certificate)}
+                              data-testid={`button-download-qr-${certificate.id}`}
+                            >
                               <Download className="mr-1 h-4 w-4" />
-                              Download
+                              Download QR
                             </Button>
-                            <Button variant="outline" size="sm" data-testid={`button-qr-certificate-${certificate.id}`}>
-                              <QrCode className="mr-1 h-4 w-4" />
-                              QR Code
-                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" data-testid={`button-view-qr-${certificate.id}`}>
+                                  <QrCode className="mr-1 h-4 w-4" />
+                                  View QR
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <div className="text-center space-y-4">
+                                  <h3 className="text-lg font-semibold">Certificate QR Code</h3>
+                                  <p className="text-sm text-gray-600">
+                                    Scan this QR code to verify certificate: {certificate.certificateId}
+                                  </p>
+                                  <div className="flex justify-center">
+                                    <img 
+                                      src={generateQRCodeURL(certificate.qrCode, 200)} 
+                                      alt="Certificate QR Code" 
+                                      className="w-48 h-48 border rounded-lg"
+                                    />
+                                  </div>
+                                  <Button 
+                                    onClick={() => handleDownloadQR(certificate)}
+                                    className="w-full bg-skilld-blue hover:bg-blue-700"
+                                  >
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download QR Code
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
