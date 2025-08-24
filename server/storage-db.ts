@@ -52,12 +52,18 @@ export class DbStorage implements IStorage {
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
+    // Determine studentId: auto-generate if requested or if blank
+    let studentId = insertStudent.studentId;
+    if ((insertStudent as any).autoGenerateId || !studentId || !studentId.trim()) {
+      studentId = await this.generateStudentId();
+    }
+
     const rows = await db
       .insert(students)
       .values({
         name: insertStudent.name,
         email: insertStudent.email,
-        studentId: insertStudent.studentId,
+        studentId,
       })
       .returning();
     return rows[0];
@@ -92,11 +98,12 @@ export class DbStorage implements IStorage {
       .replace(/{YEAR}/g, year.toString())
       .replace(/{MONTH}/g, month);
 
-    const numberPattern = processedTemplate.match(/(#+)/);
+    // Find the pattern for numbers (supports {###} or ###)
+    const numberPattern = processedTemplate.match(/\{(#+)\}/) || processedTemplate.match(/(#+)/);
     if (!numberPattern) return processedTemplate;
 
     const paddingLength = numberPattern[1].length;
-    const prefix = processedTemplate.replace(numberPattern[1], "");
+    const prefix = processedTemplate.replace(numberPattern[0], "");
 
     const rows = await db
       .select({ studentId: students.studentId })
@@ -113,7 +120,7 @@ export class DbStorage implements IStorage {
 
     const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
     const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
-    return processedTemplate.replace(numberPattern[1], paddedNumber);
+    return processedTemplate.replace(numberPattern[0], paddedNumber);
   }
 
   // Certificates

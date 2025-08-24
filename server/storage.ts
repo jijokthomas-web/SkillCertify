@@ -153,8 +153,8 @@ export class MemStorage implements IStorage {
       .replace(/{YEAR}/g, year.toString())
       .replace(/{MONTH}/g, month);
     
-    // Find the pattern for numbers (consecutive # symbols)
-    const numberPattern = processedTemplate.match(/(#+)/);
+    // Find the pattern for numbers (supports {###} or ###)
+    const numberPattern = processedTemplate.match(/\{(#+)\}/) || processedTemplate.match(/(#+)/);
     if (!numberPattern) {
       // No number pattern found, just return the template
       return processedTemplate;
@@ -162,8 +162,8 @@ export class MemStorage implements IStorage {
     
     const paddingLength = numberPattern[1].length;
     
-    // Create prefix by removing the number pattern
-    const prefix = processedTemplate.replace(numberPattern[1], "");
+    // Create prefix by removing the entire matched token (including braces if present)
+    const prefix = processedTemplate.replace(numberPattern[0], "");
     
     // Find existing numbers with this prefix
     const existingNumbers = existingStudents
@@ -178,7 +178,7 @@ export class MemStorage implements IStorage {
     const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
     const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
     
-    return processedTemplate.replace(numberPattern[1], paddedNumber);
+    return processedTemplate.replace(numberPattern[0], paddedNumber);
   }
 
   // Certificates
