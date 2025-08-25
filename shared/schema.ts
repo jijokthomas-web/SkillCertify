@@ -6,16 +6,16 @@ import { z } from "zod";
 export const courses = pgTable("courses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
-  description: text("description").notNull(),
-  duration: text("duration").notNull(),
-  skills: jsonb("skills").notNull().$type<string[]>(),
+  description: text("description"),
+  duration: text("duration"),
+  skills: jsonb("skills").$type<string[] | null>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const students = pgTable("students", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").unique(),
   studentId: text("student_id").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -25,8 +25,8 @@ export const certificates = pgTable("certificates", {
   certificateId: text("certificate_id").notNull().unique(),
   studentId: varchar("student_id").notNull(),
   courseId: varchar("course_id").notNull(),
-  grade: text("grade").notNull(),
-  issueDate: timestamp("issue_date").notNull(),
+  grade: text("grade"),
+  issueDate: timestamp("issue_date"),
   qrCode: text("qr_code").notNull(),
   verificationCount: varchar("verification_count").default("0").notNull(),
   notes: text("notes"),
@@ -41,26 +41,33 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertCourseSchema = createInsertSchema(courses).pick({
-  title: true,
-  description: true,
-  duration: true,
-  skills: true,
+export const insertCourseSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  duration: z.string().optional(),
+  skills: z.array(z.string()).optional(),
 });
 
-export const insertStudentSchema = createInsertSchema(students).pick({
-  name: true,
-  email: true,
-  studentId: true,
-}).extend({
+export const insertStudentSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email().optional(),
+  studentId: z.string().optional(),
   autoGenerateId: z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.autoGenerateId && (!data.studentId || data.studentId.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Student ID is required when auto-generation is disabled",
+      path: ["studentId"],
+    });
+  }
 });
 
 export const insertCertificateSchema = z.object({
-  studentId: z.string(),
-  courseId: z.string(),
-  grade: z.string(),
-  issueDate: z.string().transform((val) => new Date(val)),
+  studentId: z.string().min(1, "Student is required"),
+  courseId: z.string().min(1, "Course is required"),
+  grade: z.string().optional(),
+  issueDate: z.string().optional().transform((val) => (val ? new Date(val) : new Date())),
   notes: z.string().optional(),
 });
 

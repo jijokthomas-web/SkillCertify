@@ -12,7 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 const studentSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Valid email is required"),
+  email: z.string().email("Valid email is required").optional(),
   studentId: z.string().optional(),
   autoGenerateId: z.boolean(),
 }).superRefine((data, ctx) => {

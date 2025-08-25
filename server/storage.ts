@@ -22,6 +22,7 @@ export interface IStorage {
   getCertificates(): Promise<Certificate[]>;
   getCertificate(id: string): Promise<Certificate | undefined>;
   getCertificateByCertificateId(certificateId: string): Promise<Certificate | undefined>;
+  generateCertificateId(): Promise<string>;
   createCertificate(certificate: InsertCertificate & { certificateId: string; qrCode: string }): Promise<Certificate>;
   updateCertificate(id: string, certificate: Partial<Certificate>): Promise<Certificate | undefined>;
   deleteCertificate(id: string): Promise<boolean>;
@@ -60,6 +61,7 @@ export class MemStorage implements IStorage {
   private async initializeDefaultSettings() {
     await this.createOrUpdateSetting("student_id_pattern", "STU-{YEAR}-{###}");
     await this.createOrUpdateSetting("student_id_auto_generate", "true");
+    await this.createOrUpdateSetting("certificate_id_pattern", "CERT-{YEAR}-ABCD-{###}");
   }
 
   // Courses
@@ -192,6 +194,48 @@ export class MemStorage implements IStorage {
 
   async getCertificateByCertificateId(certificateId: string): Promise<Certificate | undefined> {
     return Array.from(this.certificates.values()).find(c => c.certificateId === certificateId);
+  }
+
+  async generateCertificateId(): Promise<string> {
+    const setting = await this.getSetting("certificate_id_pattern");
+    const template = setting?.value || "CERT-{YEAR}-ABCD-{###}";
+
+    const year = new Date().getFullYear();
+    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
+
+    // Replace known tokens
+    let processedTemplate = template
+      .replace(/\{YEAR\}/g, year.toString())
+      .replace(/\{MONTH\}/g, month);
+
+    // Enforce 4 parts by '-'
+    const parts = processedTemplate.split("-");
+    if (parts.length !== 4) {
+      // Coerce to 4 parts by appending sequence part
+      while (parts.length < 4) parts.push("{###}");
+      if (parts.length > 4) processedTemplate = parts.slice(0, 3).concat(parts.slice(3).join("")).join("-");
+      else processedTemplate = parts.join("-");
+    }
+
+    // Sequence handling similar to student IDs
+    const numberPattern = processedTemplate.match(/(#+)/);
+    if (!numberPattern) return processedTemplate;
+
+    const paddingLength = numberPattern[1].length;
+    const prefix = processedTemplate.replace(numberPattern[1], "");
+
+    const existingNumbers = Array.from(this.certificates.values())
+      .map(c => c.certificateId)
+      .filter(id => id.startsWith(prefix))
+      .map(id => {
+        const match = id.match(/(\d+)$/);
+        return match ? parseInt(match[1]) : 0;
+      })
+      .filter(num => !isNaN(num));
+
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
+    return processedTemplate.replace(numberPattern[1], paddedNumber);
   }
 
   async createCertificate(certificateData: InsertCertificate & { certificateId: string; qrCode: string }): Promise<Certificate> {

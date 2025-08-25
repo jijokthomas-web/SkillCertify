@@ -52,12 +52,17 @@ export class DbStorage implements IStorage {
   }
 
   async createStudent(insertStudent: InsertStudent): Promise<Student> {
+    let studentId = insertStudent.studentId;
+    if (insertStudent.autoGenerateId || !studentId || !studentId.trim()) {
+      studentId = await this.generateStudentId();
+    }
+
     const rows = await db
       .insert(students)
       .values({
         name: insertStudent.name,
-        email: insertStudent.email,
-        studentId: insertStudent.studentId,
+        email: insertStudent.email ?? null,
+        studentId,
       })
       .returning();
     return rows[0];
@@ -133,6 +138,48 @@ export class DbStorage implements IStorage {
       .where(eq(certificates.certificateId, certificateId))
       .limit(1);
     return rows[0];
+  }
+
+  async generateCertificateId(): Promise<string> {
+    const setting = await this.getSetting("certificate_id_pattern");
+    const template = setting?.value || "CERT-{YEAR}-ABCD-{###}";
+
+    const year = new Date().getFullYear();
+    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
+
+    let processedTemplate = template
+      .replace(/\{YEAR\}/g, year.toString())
+      .replace(/\{MONTH\}/g, month);
+
+    const parts = processedTemplate.split("-");
+    if (parts.length !== 4) {
+      while (parts.length < 4) parts.push("{###}");
+      if (parts.length > 4) processedTemplate = parts.slice(0, 3).concat(parts.slice(3).join("")).join("-");
+      else processedTemplate = parts.join("-");
+    }
+
+    const numberPattern = processedTemplate.match(/(#+)/);
+    if (!numberPattern) return processedTemplate;
+
+    const paddingLength = numberPattern[1].length;
+    const prefix = processedTemplate.replace(numberPattern[1], "");
+
+    const rows = await db
+      .select({ certificateId: certificates.certificateId })
+      .from(certificates)
+      .where(sql`${certificates.certificateId} LIKE ${prefix + "%"}`);
+
+    const existingNumbers = rows
+      .map(r => r.certificateId)
+      .map(id => {
+        const match = id.match(/(\d+)$/);
+        return match ? parseInt(match[1]) : 0;
+      })
+      .filter(num => !isNaN(num));
+
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const paddedNumber = nextNumber.toString().padStart(paddingLength, "0");
+    return processedTemplate.replace(numberPattern[1], paddedNumber);
   }
 
   async createCertificate(certificateData: InsertCertificate & { certificateId: string; qrCode: string }): Promise<Certificate> {
