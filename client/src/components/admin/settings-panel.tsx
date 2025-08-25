@@ -12,10 +12,14 @@ import { apiRequest } from "@/lib/queryClient";
 import { Separator } from "@/components/ui/separator";
 
 const settingsSchema = z.object({
-  prefix: z.string().min(1, "Prefix is required").max(10, "Prefix too long"),
-  middlePart: z.string().min(1, "Middle part is required"),
-  numberPadding: z.string().min(1, "Number padding is required"),
-  separator: z.string().max(3, "Separator too long"),
+  studentPrefix: z.string().min(1, "Prefix is required").max(10, "Prefix too long"),
+  studentMiddlePart: z.string().min(1, "Middle part is required"),
+  studentNumberPadding: z.string().min(1, "Number padding is required"),
+  studentSeparator: z.string().max(3, "Separator too long"),
+  certPart1: z.string().min(1),
+  certPart2: z.string().min(1),
+  certPart3: z.string().min(1),
+  certPart4: z.string().min(1),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -32,10 +36,14 @@ export default function SettingsPanel() {
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      prefix: "STU",
-      middlePart: "{YEAR}",
-      numberPadding: "###",
-      separator: "-",
+      studentPrefix: "STU",
+      studentMiddlePart: "{YEAR}",
+      studentNumberPadding: "###",
+      studentSeparator: "-",
+      certPart1: "CERT",
+      certPart2: "{YEAR}",
+      certPart3: "ABCD",
+      certPart4: "{###}",
     },
   });
 
@@ -45,10 +53,19 @@ export default function SettingsPanel() {
       const pattern = settings.find(s => s.key === "student_id_pattern")?.value || "STU-{YEAR}-###";
       const parts = pattern.split("-");
       if (parts.length >= 3) {
-        form.setValue("prefix", parts[0]);
-        form.setValue("middlePart", parts[1]);
-        form.setValue("numberPadding", parts[2]);
-        form.setValue("separator", "-");
+        form.setValue("studentPrefix", parts[0]);
+        form.setValue("studentMiddlePart", parts[1]);
+        form.setValue("studentNumberPadding", parts[2]);
+        form.setValue("studentSeparator", "-");
+      }
+
+      const certPattern = settings.find(s => s.key === "certificate_id_pattern")?.value || "CERT-{YEAR}-ABCD-{###}";
+      const cparts = certPattern.split("-");
+      if (cparts.length === 4) {
+        form.setValue("certPart1", cparts[0]);
+        form.setValue("certPart2", cparts[1]);
+        form.setValue("certPart3", cparts[2]);
+        form.setValue("certPart4", cparts[3]);
       }
     }
   }, [settings, form]);
@@ -56,9 +73,9 @@ export default function SettingsPanel() {
   // Update preview when form values change
   useEffect(() => {
     const subscription = form.watch((values) => {
-      if (values.prefix && values.middlePart && values.numberPadding && values.separator) {
+      if (values.studentPrefix && values.studentMiddlePart && values.studentNumberPadding && values.studentSeparator) {
         const currentYear = new Date().getFullYear();
-        const preview = `${values.prefix}${values.separator}${values.middlePart.replace("{YEAR}", currentYear.toString())}${values.separator}${values.numberPadding.replace(/#+/g, (match) => "1".padStart(match.length, "0"))}`;
+        const preview = `${values.studentPrefix}${values.studentSeparator}${values.studentMiddlePart.replace("{YEAR}", currentYear.toString())}${values.studentSeparator}${values.studentNumberPadding.replace(/#+/g, (match) => "1".padStart(match.length, "0"))}`;
         setPreviewId(preview);
       }
     });
@@ -67,18 +84,19 @@ export default function SettingsPanel() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: SettingsFormData) => {
-      const pattern = `${data.prefix}${data.separator}${data.middlePart}${data.separator}${data.numberPadding}`;
-      const response = await apiRequest("POST", "/api/admin/settings", {
-        key: "student_id_pattern",
-        value: pattern,
-      });
+      const studentPattern = `${data.studentPrefix}${data.studentSeparator}${data.studentMiddlePart}${data.studentSeparator}${data.studentNumberPadding}`;
+      const certPattern = `${data.certPart1}-${data.certPart2}-${data.certPart3}-${data.certPart4}`;
+
+      // Save both patterns
+      await apiRequest("POST", "/api/admin/settings", { key: "student_id_pattern", value: studentPattern });
+      const response = await apiRequest("POST", "/api/admin/settings", { key: "certificate_id_pattern", value: certPattern });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
       toast({
         title: "Success",
-        description: "Student ID pattern updated successfully",
+        description: "Settings updated successfully",
       });
     },
     onError: (error: any) => {
@@ -130,7 +148,7 @@ export default function SettingsPanel() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="prefix"
+                  name="studentPrefix"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Part 1: Prefix</FormLabel>
@@ -151,7 +169,7 @@ export default function SettingsPanel() {
 
                 <FormField
                   control={form.control}
-                  name="middlePart"
+                  name="studentMiddlePart"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Part 2: Middle Section</FormLabel>
@@ -172,7 +190,7 @@ export default function SettingsPanel() {
 
                 <FormField
                   control={form.control}
-                  name="numberPadding"
+                  name="studentNumberPadding"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Part 3: Number Format</FormLabel>
@@ -193,7 +211,7 @@ export default function SettingsPanel() {
 
                 <FormField
                   control={form.control}
-                  name="separator"
+                  name="studentSeparator"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Separator</FormLabel>
@@ -211,6 +229,48 @@ export default function SettingsPanel() {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <Separator />
+
+              <h3 className="text-lg font-semibold">Certificate ID Pattern</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <FormField control={form.control} name="certPart1" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Part 1</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="certPart2" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Part 2</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="certPart3" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Part 3</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="certPart4" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Part 4</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
               </div>
 
               {/* Preview */}

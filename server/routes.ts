@@ -185,10 +185,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/certificates", async (req, res) => {
     try {
       const certificateData = insertCertificateSchema.parse(req.body);
-      
-      // Generate certificate ID
-      const timestamp = Date.now();
-      const certificateId = `SKILLD-${new Date().getFullYear()}-${String(timestamp).slice(-6)}`;
+      // Generate certificate ID from pattern
+      const certificateId = await storage.generateCertificateId();
       
       // Generate QR code URL
       const forwardedProto = (req.get("x-forwarded-proto") || req.protocol || "https") as string;
@@ -239,6 +237,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/settings", async (req, res) => {
     try {
       const { key, value } = req.body;
+      if (key === "certificate_id_pattern") {
+        // basic validation: 4 parts, alphanumeric and tokens YEAR/MONTH allowed, # for numbers
+        const parts = String(value).split("-");
+        if (parts.length !== 4) {
+          return res.status(400).json({ error: "Pattern must have 4 parts separated by '-'" });
+        }
+        const alnumOrToken = /^([A-Za-z0-9{}#]+)$/;
+        for (const p of parts) {
+          if (!alnumOrToken.test(p)) {
+            return res.status(400).json({ error: "Each part must be alphanumeric or tokens {YEAR},{MONTH},#" });
+          }
+        }
+      }
       const setting = await storage.createOrUpdateSetting(key, value);
       res.json(setting);
     } catch (error) {

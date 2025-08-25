@@ -19,9 +19,9 @@ export async function ensureSchema(): Promise<void> {
   await sqlClient`CREATE TABLE IF NOT EXISTS courses (
     id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
     title text NOT NULL,
-    description text NOT NULL,
-    duration text NOT NULL,
-    skills jsonb NOT NULL,
+    description text,
+    duration text,
+    skills jsonb,
     created_at timestamp NOT NULL DEFAULT now()
   )`;
 
@@ -29,7 +29,7 @@ export async function ensureSchema(): Promise<void> {
   await sqlClient`CREATE TABLE IF NOT EXISTS students (
     id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
     name text NOT NULL,
-    email text NOT NULL UNIQUE,
+    email text UNIQUE,
     student_id text NOT NULL UNIQUE,
     created_at timestamp NOT NULL DEFAULT now()
   )`;
@@ -40,13 +40,21 @@ export async function ensureSchema(): Promise<void> {
     certificate_id text NOT NULL UNIQUE,
     student_id varchar NOT NULL,
     course_id varchar NOT NULL,
-    grade text NOT NULL,
-    issue_date timestamp NOT NULL,
+    grade text,
+    issue_date timestamp,
     qr_code text NOT NULL,
     verification_count varchar NOT NULL DEFAULT '0',
     notes text,
     created_at timestamp NOT NULL DEFAULT now()
   )`;
+
+  // Migrations to relax NOT NULL constraints if tables already exist
+  try { await sqlClient`ALTER TABLE students ALTER COLUMN email DROP NOT NULL`; } catch {}
+  try { await sqlClient`ALTER TABLE courses ALTER COLUMN description DROP NOT NULL`; } catch {}
+  try { await sqlClient`ALTER TABLE courses ALTER COLUMN duration DROP NOT NULL`; } catch {}
+  try { await sqlClient`ALTER TABLE courses ALTER COLUMN skills DROP NOT NULL`; } catch {}
+  try { await sqlClient`ALTER TABLE certificates ALTER COLUMN grade DROP NOT NULL`; } catch {}
+  try { await sqlClient`ALTER TABLE certificates ALTER COLUMN issue_date DROP NOT NULL`; } catch {}
 
   // settings
   await sqlClient`CREATE TABLE IF NOT EXISTS settings (

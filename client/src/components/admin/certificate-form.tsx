@@ -14,8 +14,8 @@ import { apiRequest } from "@/lib/queryClient";
 const certificateSchema = z.object({
   studentId: z.string().min(1, "Student is required"),
   courseId: z.string().min(1, "Course is required"),
-  grade: z.string().min(1, "Grade is required"),
-  issueDate: z.string().min(1, "Issue date is required"),
+  grade: z.string().optional(),
+  issueDate: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -49,8 +49,8 @@ export default function CertificateForm() {
       const certificateData = {
         studentId: data.studentId,
         courseId: data.courseId,
-        grade: data.grade,
-        issueDate: new Date(data.issueDate).toISOString(),
+        grade: data.grade || "",
+        issueDate: data.issueDate ? new Date(data.issueDate).toISOString() : new Date().toISOString(),
         notes: data.notes || "",
       };
       const response = await apiRequest("POST", "/api/admin/certificates", certificateData);

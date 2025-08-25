@@ -12,9 +12,9 @@ import { apiRequest } from "@/lib/queryClient";
 
 const courseSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  duration: z.string().min(1, "Duration is required"),
-  skills: z.string().min(1, "Skills are required"),
+  description: z.string().optional(),
+  duration: z.string().optional(),
+  skills: z.string().optional(),
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -37,7 +37,7 @@ export default function CourseForm() {
     mutationFn: async (data: CourseFormData) => {
       const courseData = {
         ...data,
-        skills: data.skills.split(",").map(skill => skill.trim()).filter(Boolean),
+        skills: (data.skills || "").split(",").map(skill => skill.trim()).filter(Boolean),
       };
       const response = await apiRequest("POST", "/api/admin/courses", courseData);
       return response.json();
