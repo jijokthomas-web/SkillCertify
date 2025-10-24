@@ -146,235 +146,233 @@ export default function SettingsPanel() {
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">System Settings</h2>
-        <p className="text-gray-600">Configure system-wide settings and preferences</p>
-      </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">System Settings</h2>
+          <p className="text-gray-600">Configure system-wide settings and preferences</p>
+        </div>
 
-      {/* Student ID Pattern Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Student ID Pattern Configuration</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="studentPrefix"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Part 1: Prefix</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g., STU, STUDENT, S" 
-                          {...field} 
-                          data-testid="input-id-prefix"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        The beginning part of the student ID
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {/* Student ID Pattern Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Student ID Pattern Configuration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="studentPrefix"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Part 1: Prefix</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., STU, STUDENT, S" 
+                        {...field} 
+                        data-testid="input-id-prefix"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      The beginning part of the student ID
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="studentMiddlePart"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Part 2: Middle Section</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g., {YEAR}, {MONTH}, DEPT" 
-                          {...field} 
-                          data-testid="input-id-middle"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Use {"{YEAR}"} for current year, {"{MONTH}"} for month, or static text
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="studentMiddlePart"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Part 2: Middle Section</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., {YEAR}, {MONTH}, DEPT" 
+                        {...field} 
+                        data-testid="input-id-middle"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Use {"{YEAR}"} for current year, {"{MONTH}"} for month, or static text
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="studentNumberPadding"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Part 3: Number Format</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g., ###, ####, ##" 
-                          {...field} 
-                          data-testid="input-id-number"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Use # symbols for digits (### = 001, #### = 0001)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="studentNumberPadding"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Part 3: Number Format</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., ###, ####, ##" 
+                        {...field} 
+                        data-testid="input-id-number"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Use # symbols for digits (### = 001, #### = 0001)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="studentSeparator"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Separator</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g., -, _, ." 
-                          {...field} 
-                          data-testid="input-id-separator"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Character(s) between each part
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="studentSeparator"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Separator</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g., -, _, ." 
+                        {...field} 
+                        data-testid="input-id-separator"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Character(s) between each part
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            <h3 className="text-lg font-semibold">Certificate ID Pattern</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <FormField control={form.control} name="certPart1" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Part 1</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="certPart2" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Part 2</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="certPart3" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Part 3</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="certPart4" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Part 4</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
+            {/* Preview */}
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Preview</h4>
+              <div className="text-lg font-mono text-skilld-blue" data-testid="preview-student-id">
+                {previewId || "STU-2025-001"}
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                This is how new student IDs will look
+              </p>
+            </div>
 
-              <Separator />
+            <Separator />
 
-              <h3 className="text-lg font-semibold">Certificate ID Pattern</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <FormField control={form.control} name="certPart1" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Part 1</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="certPart2" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Part 2</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="certPart3" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Part 3</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="certPart4" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Part 4</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+            <div className="flex justify-between items-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => generateSampleMutation.mutate()}
+                disabled={generateSampleMutation.isPending}
+                data-testid="button-generate-sample"
+              >
+                {generateSampleMutation.isPending ? "Generating..." : "Generate Next ID"}
+              </Button>
 
-              {/* Preview */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Preview</h4>
-                <div className="text-lg font-mono text-skilld-blue" data-testid="preview-student-id">
-                  {previewId || "STU-2025-001"}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  This is how new student IDs will look
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="flex justify-between items-center">
-                <Button
-                  type="button"
+              <div className="flex space-x-4">
+                <Button 
+                  type="button" 
                   variant="outline"
-                  onClick={() => generateSampleMutation.mutate()}
-                  disabled={generateSampleMutation.isPending}
-                  data-testid="button-generate-sample"
+                  onClick={() => form.reset()}
+                  data-testid="button-reset-settings"
                 >
-                  {generateSampleMutation.isPending ? "Generating..." : "Generate Next ID"}
+                  Reset
                 </Button>
-
-                <div className="flex space-x-4">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => form.reset()}
-                    data-testid="button-reset-settings"
-                  >
-                    Reset
-                  </Button>
-                  <Button 
-                    type="submit"
-                    disabled={updateSettingsMutation.isPending}
-                    className="bg-skilld-blue hover:bg-blue-700"
-                    data-testid="button-save-settings"
-                  >
-                    {updateSettingsMutation.isPending ? "Saving..." : "Save Settings"}
-                  </Button>
-                </div>
+                <Button 
+                  type="submit"
+                  disabled={updateSettingsMutation.isPending}
+                  className="bg-skilld-blue hover:bg-blue-700"
+                  data-testid="button-save-settings"
+                >
+                  {updateSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+                </Button>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Branding Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Branding</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="siteLogoUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Site Logo URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://.../logo.png" {...field} />
-                  </FormControl>
-                  <FormDescription>Displayed in headers across the site.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {/* Branding Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Branding</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="siteLogoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Site Logo URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://.../logo.png" {...field} />
+                    </FormControl>
+                    <FormDescription>Displayed in headers across the site.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="siteFaviconUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Favicon URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://.../favicon.ico or .png" {...field} />
-                  </FormControl>
-                  <FormDescription>Shown in the browser tab.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              <FormField
+                control={form.control}
+                name="siteFaviconUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Favicon URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://.../favicon.ico or .png" {...field} />
+                    </FormControl>
+                    <FormDescription>Shown in the browser tab.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </form>
+    </Form>
   );
 }
