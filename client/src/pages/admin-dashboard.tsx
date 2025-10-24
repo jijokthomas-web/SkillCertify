@@ -39,6 +39,8 @@ export default function AdminDashboard({ params }: { params?: { section?: string
   const [, setLocation] = useLocation();
   const [activePanel, setActivePanel] = useState(params?.section || "overview");
   const [user, setUser] = useState<any>(null);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [certificateSearch, setCertificateSearch] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -359,8 +361,8 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                       type="text"
                       placeholder="Search students by name, email, or ID..."
                       className="w-full border rounded-md py-2 pl-9 pr-3 text-sm"
-                      value={(window as any).__studentSearch || ""}
-                      onChange={(e) => ((window as any).__studentSearch = e.target.value) || setActivePanel("students")}
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
                     />
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                   </div>
@@ -409,7 +411,7 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                         <tbody className="bg-white divide-y divide-gray-200">
                           {students
                             .filter((s: any) => {
-                              const q = String((window as any).__studentSearch || "").toLowerCase();
+                              const q = studentSearch.toLowerCase();
                               if (!q) return true;
                               return (
                                 s.name?.toLowerCase().includes(q) ||
@@ -472,8 +474,8 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                       type="text"
                       placeholder="Search certificates by course, student, or ID..."
                       className="w-full border rounded-md py-2 pl-9 pr-3 text-sm"
-                      value={(window as any).__certificateSearch || ""}
-                      onChange={(e) => ((window as any).__certificateSearch = e.target.value) || setActivePanel("certificates")}
+                      value={certificateSearch}
+                      onChange={(e) => setCertificateSearch(e.target.value)}
                     />
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                   </div>
@@ -502,7 +504,7 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                 ) : (
                   certificates
                     .filter((c: any) => {
-                      const q = String((window as any).__certificateSearch || "").toLowerCase();
+                      const q = certificateSearch.toLowerCase();
                       if (!q) return true;
                       return (
                         c.course?.title?.toLowerCase().includes(q) ||
