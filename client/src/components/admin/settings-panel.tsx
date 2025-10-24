@@ -20,8 +20,9 @@ const settingsSchema = z.object({
   certPart2: z.string().min(1),
   certPart3: z.string().min(1),
   certPart4: z.string().min(1),
-  siteLogoUrl: z.string().url("Must be a valid URL").optional(),
-  siteFaviconUrl: z.string().url("Must be a valid URL").optional(),
+  // Branding is stored as Data URIs or empty string; not validating as URL
+  siteLogoUrl: z.string().optional(),
+  siteFaviconUrl: z.string().optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -30,6 +31,12 @@ export default function SettingsPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [previewId, setPreviewId] = useState("");
+  const defaultLogo = "/branding-default-logo.svg";
+  const defaultFavicon = "/branding-default-favicon.svg";
+  const [logoPreview, setLogoPreview] = useState<string>(defaultLogo);
+  const [faviconPreview, setFaviconPreview] = useState<string>(defaultFavicon);
+  const [logoDataUri, setLogoDataUri] = useState<string | undefined>(undefined);
+  const [faviconDataUri, setFaviconDataUri] = useState<string | undefined>(undefined);
 
   const { data: settings = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/settings"],
@@ -73,9 +80,19 @@ export default function SettingsPanel() {
       }
 
       const existingLogo = settings.find(s => s.key === "site_logo_url")?.value;
-      if (existingLogo) form.setValue("siteLogoUrl", existingLogo);
+      if (existingLogo) {
+        form.setValue("siteLogoUrl", existingLogo);
+        setLogoPreview(existingLogo || defaultLogo);
+      } else {
+        setLogoPreview(defaultLogo);
+      }
       const existingFavicon = settings.find(s => s.key === "site_favicon_url")?.value;
-      if (existingFavicon) form.setValue("siteFaviconUrl", existingFavicon);
+      if (existingFavicon) {
+        form.setValue("siteFaviconUrl", existingFavicon);
+        setFaviconPreview(existingFavicon || defaultFavicon);
+      } else {
+        setFaviconPreview(defaultFavicon);
+      }
     }
   }, [settings, form]);
 
@@ -99,11 +116,11 @@ export default function SettingsPanel() {
       // Save both patterns
       await apiRequest("POST", "/api/admin/settings", { key: "student_id_pattern", value: studentPattern });
       await apiRequest("POST", "/api/admin/settings", { key: "certificate_id_pattern", value: certPattern });
-      if (data.siteLogoUrl) {
-        await apiRequest("POST", "/api/admin/settings", { key: "site_logo_url", value: data.siteLogoUrl });
+      if (logoDataUri !== undefined) {
+        await apiRequest("POST", "/api/admin/settings", { key: "site_logo_url", value: logoDataUri });
       }
-      if (data.siteFaviconUrl) {
-        await apiRequest("POST", "/api/admin/settings", { key: "site_favicon_url", value: data.siteFaviconUrl });
+      if (faviconDataUri !== undefined) {
+        await apiRequest("POST", "/api/admin/settings", { key: "site_favicon_url", value: faviconDataUri });
       }
       return { success: true } as any;
     },
@@ -144,6 +161,49 @@ export default function SettingsPanel() {
   const onSubmit = (data: SettingsFormData) => {
     updateSettingsMutation.mutate(data);
   };
+
+  async function fileToDataUri(file: File): Promise<string> {
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function onLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        toast({ title: "File too large", description: "Max 2MB", variant: "destructive" });
+        return;
+      }
+      const dataUri = await fileToDataUri(file);
+      setLogoDataUri(dataUri);
+      form.setValue("siteLogoUrl", dataUri);
+      setLogoPreview(dataUri);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err?.message || "Could not read file", variant: "destructive" });
+    }
+  }
+
+  async function onFaviconChange(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 512 * 1024) {
+        toast({ title: "File too large", description: "Max 512KB for favicon", variant: "destructive" });
+        return;
+      }
+      const dataUri = await fileToDataUri(file);
+      setFaviconDataUri(dataUri);
+      form.setValue("siteFaviconUrl", dataUri);
+      setFaviconPreview(dataUri);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err?.message || "Could not read file", variant: "destructive" });
+    }
+  }
 
   return (
     <Form {...form}>
@@ -340,35 +400,23 @@ export default function SettingsPanel() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="siteLogoUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Site Logo URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://.../logo.png" {...field} />
-                    </FormControl>
-                    <FormDescription>Displayed in headers across the site.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <FormLabel>Site Logo</FormLabel>
+                <div className="mt-2 flex items-center gap-4">
+                  <img src={logoPreview} alt="Logo Preview" className="h-12 w-auto border rounded bg-white" />
+                  <Input type="file" accept="image/*" onChange={onLogoChange} data-testid="input-logo-file" />
+                </div>
+                <FormDescription className="mt-2">PNG/SVG recommended. Max 2MB.</FormDescription>
+              </div>
 
-              <FormField
-                control={form.control}
-                name="siteFaviconUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Favicon URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://.../favicon.ico or .png" {...field} />
-                    </FormControl>
-                    <FormDescription>Shown in the browser tab.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <FormLabel>Favicon</FormLabel>
+                <div className="mt-2 flex items-center gap-4">
+                  <img src={faviconPreview} alt="Favicon Preview" className="h-8 w-8 border rounded bg-white" />
+                  <Input type="file" accept="image/*" onChange={onFaviconChange} data-testid="input-favicon-file" />
+                </div>
+                <FormDescription className="mt-2">ICO/PNG/SVG. Max 512KB.</FormDescription>
+              </div>
             </div>
           </CardContent>
         </Card>

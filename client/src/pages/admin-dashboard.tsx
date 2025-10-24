@@ -65,8 +65,10 @@ export default function AdminDashboard({ params }: { params?: { section?: string
     queryKey: ["/api/admin/settings"],
   });
 
-  const logoUrl = settings.find?.((s: any) => s.key === "site_logo_url")?.value || "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png";
-  const faviconUrl = settings.find?.((s: any) => s.key === "site_favicon_url")?.value || logoUrl;
+  const defaultLogo = "/branding-default-logo.svg";
+  const defaultFavicon = "/branding-default-favicon.svg";
+  const logoUrl = settings.find?.((s: any) => s.key === "site_logo_url")?.value || defaultLogo;
+  const faviconUrl = settings.find?.((s: any) => s.key === "site_favicon_url")?.value || defaultFavicon;
 
   useEffect(() => {
     setFavicon(faviconUrl);

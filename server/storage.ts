@@ -62,15 +62,7 @@ export class MemStorage implements IStorage {
     await this.createOrUpdateSetting("student_id_pattern", "STU-{YEAR}-{###}");
     await this.createOrUpdateSetting("student_id_auto_generate", "true");
     await this.createOrUpdateSetting("certificate_id_pattern", "CERT-{YEAR}-ABCD-{###}");
-    // Branding defaults
-    await this.createOrUpdateSetting(
-      "site_logo_url",
-      "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png"
-    );
-    await this.createOrUpdateSetting(
-      "site_favicon_url",
-      "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png"
-    );
+    // Branding defaults: do not set external URLs. UI falls back to local assets.
   }
 
   // Courses
