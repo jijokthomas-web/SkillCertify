@@ -26,6 +26,7 @@ import CourseForm from "@/components/admin/course-form";
 import StudentForm from "@/components/admin/student-form";
 import CertificateForm from "@/components/admin/certificate-form";
 import SettingsPanel from "@/components/admin/settings-panel";
+import { setFavicon } from "@/lib/utils";
 
 interface DashboardStats {
   totalCourses: number;
@@ -58,6 +59,16 @@ export default function AdminDashboard({ params }: { params?: { section?: string
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/admin/stats"],
   });
+  const { data: settings = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/settings"],
+  });
+
+  const logoUrl = settings.find?.((s: any) => s.key === "site_logo_url")?.value || "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png";
+  const faviconUrl = settings.find?.((s: any) => s.key === "site_favicon_url")?.value || logoUrl;
+
+  useEffect(() => {
+    setFavicon(faviconUrl);
+  }, [faviconUrl]);
 
   const { data: courses = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/courses"],
@@ -116,7 +127,7 @@ export default function AdminDashboard({ params }: { params?: { section?: string
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <img src="https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png" alt="Logo" className="h-10 w-auto mr-3" />
+              <img src={logoUrl} alt="Logo" className="h-10 w-auto mr-3" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">SKILLD Admin</h1>
                 <p className="text-sm text-gray-600">Certificate Management System</p>
@@ -341,6 +352,19 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                   <h2 className="text-2xl font-bold text-gray-900">Student Management</h2>
                   <p className="text-gray-600">Manage student records and enrollments</p>
                 </div>
+                {/* Search Students */}
+                <div className="flex items-center gap-2 max-w-sm w-full">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Search students by name, email, or ID..."
+                      className="w-full border rounded-md py-2 pl-9 pr-3 text-sm"
+                      value={(window as any).__studentSearch || ""}
+                      onChange={(e) => ((window as any).__studentSearch = e.target.value) || setActivePanel("students")}
+                    />
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button className="bg-skilld-blue hover:bg-blue-700" data-testid="button-add-student">
@@ -383,7 +407,17 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {students.map((student: any) => (
+                          {students
+                            .filter((s: any) => {
+                              const q = String((window as any).__studentSearch || "").toLowerCase();
+                              if (!q) return true;
+                              return (
+                                s.name?.toLowerCase().includes(q) ||
+                                s.email?.toLowerCase().includes(q) ||
+                                s.studentId?.toLowerCase().includes(q)
+                              );
+                            })
+                            .map((student: any) => (
                             <tr key={student.id} data-testid={`row-student-${student.id}`}>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
@@ -431,6 +465,19 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                   <h2 className="text-2xl font-bold text-gray-900">Certificate Management</h2>
                   <p className="text-gray-600">Issue and manage certificates</p>
                 </div>
+                {/* Search Certificates */}
+                <div className="flex items-center gap-2 max-w-sm w-full">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Search certificates by course, student, or ID..."
+                      className="w-full border rounded-md py-2 pl-9 pr-3 text-sm"
+                      value={(window as any).__certificateSearch || ""}
+                      onChange={(e) => ((window as any).__certificateSearch = e.target.value) || setActivePanel("certificates")}
+                    />
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button className="bg-skilld-blue hover:bg-blue-700" data-testid="button-issue-certificate">
@@ -453,7 +500,17 @@ export default function AdminDashboard({ params }: { params?: { section?: string
                     <p className="mt-1 text-sm text-gray-500">Get started by issuing a new certificate.</p>
                   </div>
                 ) : (
-                  certificates.map((certificate: any) => (
+                  certificates
+                    .filter((c: any) => {
+                      const q = String((window as any).__certificateSearch || "").toLowerCase();
+                      if (!q) return true;
+                      return (
+                        c.course?.title?.toLowerCase().includes(q) ||
+                        c.student?.name?.toLowerCase().includes(q) ||
+                        c.certificateId?.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((certificate: any) => (
                     <Card key={certificate.id} data-testid={`card-certificate-${certificate.id}`}>
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">

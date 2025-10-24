@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { generateQRCodeURL } from "@/lib/qr-generator";
+import { setFavicon } from "@/lib/utils";
 
 interface VerificationData {
   certificate: {
@@ -34,6 +35,12 @@ interface VerificationData {
 export default function Verify({ params }: { params: { certificateId: string } }) {
   const { certificateId } = params;
   const { toast } = useToast();
+  const { data: settings = [] } = useQuery<any[]>({ queryKey: ["/api/admin/settings"] });
+  const logoUrl = settings.find?.((s: any) => s.key === "site_logo_url")?.value || "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png";
+  const faviconUrl = settings.find?.((s: any) => s.key === "site_favicon_url")?.value || logoUrl;
+
+  // update favicon when settings change
+  setFavicon(faviconUrl);
 
   const { data, isLoading, error } = useQuery<VerificationData>({
     queryKey: ["/api/verify", certificateId],
@@ -127,7 +134,7 @@ export default function Verify({ params }: { params: { certificateId: string } }
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <img src="https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png" alt="Logo" className="h-12 w-auto mr-4" />
+              <img src={logoUrl} alt="Logo" className="h-12 w-auto mr-4" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Verified By SKILLD</h1>
                 <p className="text-sm text-gray-600">Certificate Details</p>

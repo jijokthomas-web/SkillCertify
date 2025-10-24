@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Tag, Shield, Clock, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { setFavicon } from "@/lib/utils";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [certificateId, setCertificateId] = useState("");
   const { toast } = useToast();
+  const { data: settings = [] } = useQuery<any[]>({ queryKey: ["/api/admin/settings"] });
+  const logoUrl = settings.find?.((s: any) => s.key === "site_logo_url")?.value || "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png";
+  const faviconUrl = settings.find?.((s: any) => s.key === "site_favicon_url")?.value || logoUrl;
+
+  useEffect(() => { setFavicon(faviconUrl); }, [faviconUrl]);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +37,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <img src="https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png" alt="Logo" className="h-12 w-auto mr-4" />
+              <img src={logoUrl} alt="Logo" className="h-12 w-auto mr-4" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Verified By SKILLD</h1>
                 <p className="text-sm text-gray-600">Certificate Verification System</p>

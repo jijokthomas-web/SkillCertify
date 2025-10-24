@@ -20,6 +20,8 @@ const settingsSchema = z.object({
   certPart2: z.string().min(1),
   certPart3: z.string().min(1),
   certPart4: z.string().min(1),
+  siteLogoUrl: z.string().url("Must be a valid URL").optional(),
+  siteFaviconUrl: z.string().url("Must be a valid URL").optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -44,6 +46,8 @@ export default function SettingsPanel() {
       certPart2: "{YEAR}",
       certPart3: "ABCD",
       certPart4: "{###}",
+      siteLogoUrl: "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png",
+      siteFaviconUrl: "https://i.postimg.cc/mDpXXdb7/Final-logo-v3-v3-1.png",
     },
   });
 
@@ -67,6 +71,11 @@ export default function SettingsPanel() {
         form.setValue("certPart3", cparts[2]);
         form.setValue("certPart4", cparts[3]);
       }
+
+      const existingLogo = settings.find(s => s.key === "site_logo_url")?.value;
+      if (existingLogo) form.setValue("siteLogoUrl", existingLogo);
+      const existingFavicon = settings.find(s => s.key === "site_favicon_url")?.value;
+      if (existingFavicon) form.setValue("siteFaviconUrl", existingFavicon);
     }
   }, [settings, form]);
 
@@ -89,8 +98,14 @@ export default function SettingsPanel() {
 
       // Save both patterns
       await apiRequest("POST", "/api/admin/settings", { key: "student_id_pattern", value: studentPattern });
-      const response = await apiRequest("POST", "/api/admin/settings", { key: "certificate_id_pattern", value: certPattern });
-      return response.json();
+      await apiRequest("POST", "/api/admin/settings", { key: "certificate_id_pattern", value: certPattern });
+      if (data.siteLogoUrl) {
+        await apiRequest("POST", "/api/admin/settings", { key: "site_logo_url", value: data.siteLogoUrl });
+      }
+      if (data.siteFaviconUrl) {
+        await apiRequest("POST", "/api/admin/settings", { key: "site_favicon_url", value: data.siteFaviconUrl });
+      }
+      return { success: true } as any;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
@@ -321,13 +336,43 @@ export default function SettingsPanel() {
         </CardContent>
       </Card>
 
-      {/* Additional Settings Card */}
+      {/* Branding Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Other Settings</CardTitle>
+          <CardTitle>Branding</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600">Additional system settings will be added here in future updates.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="siteLogoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Site Logo URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://.../logo.png" {...field} />
+                  </FormControl>
+                  <FormDescription>Displayed in headers across the site.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="siteFaviconUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Favicon URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://.../favicon.ico or .png" {...field} />
+                  </FormControl>
+                  <FormDescription>Shown in the browser tab.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </CardContent>
       </Card>
     </div>
